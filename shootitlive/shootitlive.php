@@ -1,12 +1,13 @@
 <?php
 defined('ABSPATH') or die("No script kiddies please!");
 ini_set('default_charset', 'UTF-8');
+date_default_timezone_set('Europe/Stockholm');
 /*
 Plugin Name: Shootitlive
 Plugin URI: http://shootitlive.com
 Description: Plugin for embedding live feeds from Shootitlive.com
 Author: Martin Levy
-Version: 1.3
+Version: 1.6
 Author URI: http://shootitlive.com
 License: GPL2
 */
@@ -58,8 +59,9 @@ function silp_init(){
 
 // Add meta_box
 add_action( 'add_meta_boxes', 'silp_meta_box_add' );
+$typePost = array('post','page');
 function silp_meta_box_add() {
-	add_meta_box( 'silp-meta-box-id', 'Shootitlive', 'silp_meta_box_cb', 'post', 'side', 'high' );
+	add_meta_box( 'silp-meta-box-id', 'Shootitlive', 'silp_meta_box_cb', $typePost, 'side', 'high' );
 }
 
 
@@ -142,7 +144,7 @@ function silp_meta_box_cb( $post ) {
 		if($silp_type == 'video') {
 			echo "\n\n<option value='0'>Select a video:</option>\n\n";
 			foreach($objVideo as $p) {
-				$captured = date("ymd H:m",$p[captured]);
+				$captured = date("ymd H:i",$p[captured]);
 				$caption = ($p[caption]) ? $p[caption] : '';
 				$filename = ($p[original_filename]) ? '('.substr($p[original_filename],0,15).')' : '(no name)';
 				$id = substr($p[embed], strpos($p[embed],'single=')+7, 8);
@@ -289,6 +291,7 @@ function silp_meta_box_cb( $post ) {
 		$embedcode = ($silp_type == 'video') ? $embedcode_video : $embedcode;
 		echo $embedcode;
 		echo "</div>\n\n";
+		echo "<div align='right' id='editMedia'></div>";
 
 	}//end if we have a correct api client/token
 }//end function
@@ -454,7 +457,13 @@ function silp_settings_page() { /*handler for above menu item*/
 					</td>
 				</tr>
 				<tr>
-					<th scope="row">Options:</th>
+					<th scope="row">
+						Options:
+						<div style='color:grey;font-weight:lighter;font-size:small'>
+							Enable options to appear when embedding
+							Shootitlive in a post or page.
+						</div>
+					</th>
 					<td>
 						<?
 							$silp_option_params = explode(',', silp_option_params);
@@ -472,6 +481,27 @@ function silp_settings_page() { /*handler for above menu item*/
 			<input type="submit" class="button-primary" value="<?php _e('Save Changes') ?>" />
 			</p>
 		</form>
+
+		<div style='color:grey;font-weight:bold;font-size:large'>
+			<b>F.A.Q</b>
+		</div>
+		<div style='color:grey;font-weight:lighter;font-size:small'>
+			</br>
+			<b>Where can I find my API information</b>
+			</br>Find the <i>Organisation name</i> and <i>API key</i> on your <a href='https://admin.shootitlive.com/' target='_blank'>profile page</a>
+			</br>Make sure you are entitled to use the API according to your <a href='http://shootitlive.com/signup/' target='_blank'>plan</a>
+			</br>
+			</br>
+			<b>How do I switch between galleries and videos</b>
+			</br>When creating a new post or page, you choose to list your galleries or videos and then select from the dropdown
+			</br>If a video is selected, you must first unselect it to be able to list your galleries.
+			</br>
+			</br>
+			<b>I need support</b>
+			</br><a href="mailto:support@shootitlive.com?Subject=API Support" target="_top">support@shootitlive.com</a>
+		</div>
+
+
 	</div>
 	<?
 }
@@ -516,6 +546,7 @@ if (! empty($pagenow) && ('post-new.php' === $pagenow || $_GET['action'] == 'edi
 	function updatePlayer(project,silp_settings,silp_video_id) {
 
 		var player = document.getElementById('player-area');
+		var editMedia = document.getElementById('editMedia');
 		var option_area = document.getElementById('options-area')
 		var placement_area = document.getElementById('placement-area')
 		var project_area = document.getElementById('silp_project');
@@ -534,6 +565,12 @@ if (! empty($pagenow) && ('post-new.php' === $pagenow || $_GET['action'] == 'edi
 		    var script = document.createElement('script');
 		    script.type = 'text/javascript';
 
+		    <?
+		    $options = get_option('silp_options');
+		    $client = $options['client'];
+		    $token = $options['token'];
+			?>
+			baseLoad = '//s3-eu-west-1.amazonaws.com/shootitlive/shootitlive.load.v1.1.<?echo $client;?>.js';
 
 	    	if(silp_type == 'project') {
 		    	//Lets display our option & placement div's
@@ -541,28 +578,20 @@ if (! empty($pagenow) && ('post-new.php' === $pagenow || $_GET['action'] == 'edi
 		    	if(placement_area) placement_area.style.display = 'block';
 		    	silp_type_area.style.display = 'none'; //when a project project is selected, we're removing the radio btn
 		    	project_area.options[0].text = "Remove player from post";
-		    	<?
-			    $options = get_option('silp_options');
-			    $client = $options['client'];
-			    $token = $options['token'];
-			    ?>
-			    script.src = '//s3-eu-west-1.amazonaws.com/shootitlive/shootitlive.load.v1.1.<?echo $client;?>.js?project='+project+silp_settings;
+			    script.src = baseLoad+'?project='+project+silp_settings;
+			    var editHtml = '<a href="https://admin.shootitlive.com/projects/edit/<?echo $client;?>/'+project+'" target="_blank">Edit in Shootitlive admin</a>';
+				editMedia.innerHTML = editHtml;
+			    editMedia.style.display = 'block';
 			}
 
 	    	if(silp_type == 'video') {
 		    	//Lets display our option & placement div's
 		    	if(option_area) option_area.style.display = 'block';
 		    	if(placement_area) placement_area.style.display = 'block';
-		    	//silp_type_area.style.display = 'none'; //when a project project is selected, we're removing the radio btn
-		    	//project_area.options[0].text = "Remove player from post";
-		    	//silp_settings = '&ratio=1.7777777778';
-		    	<?
-			    $options = get_option('silp_options');
-			    $client = $options['client'];
-			    $token = $options['token'];
-			    ?>
-			    script.src = '//s3-eu-west-1.amazonaws.com/shootitlive/shootitlive.load.v1.1.<?echo $client;?>.js?single='+silp_video_id+silp_settings;
+			    script.src = baseLoad+'?single='+silp_video_id+silp_settings;
+			    //var editHtml = 'Edit project in Shootitlive admin';
 			}
+
 
 
 
@@ -584,6 +613,7 @@ if (! empty($pagenow) && ('post-new.php' === $pagenow || $_GET['action'] == 'edi
 			if( (silp_type_area) && (silp_type != 'video') ) silp_type_area.style.display = 'block'; //when no project is selected, were displaying type btn
 			project_area.options[0].text = "Select a project:";
 			player.style.display = 'none';
+			editMedia.style.display = 'none';
 		}
 	}
 

@@ -1,8 +1,8 @@
 === Shootitlive ===
 Tags: cms,video,photos,livepublishing
 Requires at least: 3.0
-Tested up to: 4.0.1
-Stable tag: 1.3
+Tested up to: 5.1.1
+Stable tag: 1.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -25,6 +25,15 @@ Test the functionality  without your own API credentials by using **API Organiza
 
 == Changelog ==
 
+= 1.6 =
+* Now supports Wordpress 5.1.1
+
+= 1.5 =
+* Now supports Wordpress 5.1.1
+
+= 1.4 =
+* Embed in pages as well as in posts. FAQ on Settings page. Bug fixes.
+
 = 1.3 =
 * Now supports embedding single videos. In post mode you can choose to list/embed Galleries or Videos.
 
@@ -41,6 +50,14 @@ Test the functionality  without your own API credentials by using **API Organiza
 * First version
 
 == Upgrade Notice ==
+= 1.6 =
+* Supporting Wordpress version 5.1.1
+
+= 1.5 =
+* Supporting Wordpress version 5.1.1
+
+= 1.4 =
+* Embed in pages as well as in posts. FAQ on Settings page. Bug fixes.
 
 = 1.3 =
 * Embed videos as well as gallries.
